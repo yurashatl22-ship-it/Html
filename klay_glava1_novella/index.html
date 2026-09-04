@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="ru"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>КЛЭЙ — Глава 1 • Визуальная новелла</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/russo-one@latest/cyrillic-400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/rubik@latest/cyrillic-400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/rubik@latest/cyrillic-700.css">
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:#000;font-family:'Rubik',sans-serif}
+#bar{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;gap:12px;padding:8px 14px;background:rgba(8,10,20,.85);backdrop-filter:blur(6px);border-bottom:2px solid rgba(255,213,79,.35)}
+#bar .logo{font-family:'Russo One';color:#ffd54f;font-size:16px;letter-spacing:.05em}
+#bar .logo span{color:#9aa;font-family:'Rubik';font-size:11px;margin-left:8px}
+#bar button{font-family:'Russo One';font-size:12px;color:#111;background:#ffd54f;border:2px solid #111;border-radius:8px;padding:6px 12px;cursor:pointer;box-shadow:2px 2px 0 #000;transition:.15s}
+#bar button:hover{transform:translate(-1px,-1px);box-shadow:3px 3px 0 #000}
+#bar button:active{transform:translate(1px,1px);box-shadow:0 0 0 #000}
+#bar button:disabled{opacity:.55;cursor:wait}
+#saveStatus{color:#9ab;font-size:11px;max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#hint{margin-left:auto;color:#789;font-size:11px}
+#stage{position:fixed;inset:0;overflow:hidden;cursor:pointer}
+#stage.shake{animation:hpunch .5s ease}
+@keyframes hpunch{0%,100%{transform:translate(0,0)}15%{transform:translate(-14px,6px)}30%{transform:translate(12px,-8px)}45%{transform:translate(-10px,-6px)}60%{transform:translate(8px,6px)}75%{transform:translate(-5px,3px)}}
+.bglayer{position:absolute;inset:-50px;background:center/cover no-repeat;filter:blur(5px) saturate(1.08) brightness(.94);transform:scale(1.06);opacity:0;transition:opacity 1.1s ease}
+.bglayer.on{opacity:1}
+#sprites{position:absolute;inset:0;z-index:5}
+.spr{position:absolute;bottom:0;height:88%;opacity:0;transition:opacity .7s ease}
+.spr.on{opacity:1}
+.spr.ghost{opacity:.22}
+.spr.left{left:3%}
+.spr.right{right:3%}
+.spr.center{left:50%;transform:translateX(-50%)}
+.spr.top{left:50%;top:14%;bottom:auto;transform:translateX(-50%);height:auto}
+.spr .body{height:100%;transition:transform .35s ease,filter .35s ease;transform-origin:50% 100%}
+.spr .body img{height:100%;max-width:36vw;object-fit:contain;filter:drop-shadow(0 12px 16px rgba(0,0,0,.55))}
+.spr .body.listen{transform:scale(.94);filter:brightness(.66) saturate(.85)}
+.spr .body.talk{transform:scale(1);filter:none}
+.spr.top .body img{max-width:150px}
+.phonebox{font-size:120px;line-height:1;filter:drop-shadow(0 0 24px rgba(255,233,74,.8))}
+.spr .body.talk .phonebox{animation:ring 1s ease-in-out infinite}
+.spr .body.listen .phonebox{animation:none;filter:brightness(.7)}
+@keyframes ring{0%,100%{transform:rotate(0)}15%{transform:rotate(-14deg)}30%{transform:rotate(12deg)}45%{transform:rotate(-9deg)}60%{transform:rotate(6deg)}}
+#dlg{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);width:min(940px,94%);background:rgba(8,10,22,.85);border:2px solid rgba(255,255,255,.28);border-radius:14px;padding:14px 24px 20px;backdrop-filter:blur(6px);z-index:20;min-height:104px;box-shadow:0 12px 34px rgba(0,0,0,.55)}
+#who{display:block;font-family:'Russo One';letter-spacing:.1em;font-size:14px;margin-bottom:6px;text-transform:uppercase;min-height:16px}
+#txt{font-size:19px;line-height:1.5;color:#f4f4f4}
+#adv{position:absolute;right:16px;bottom:6px;color:#ffd54f;font-size:14px;display:none;animation:blink 1s infinite}
+#dlg.done #adv{display:block}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+#menu{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);display:none;flex-direction:column;gap:12px;z-index:30;width:min(600px,92%)}
+#menu.on{display:flex}
+#menu button{font-family:'Rubik';font-weight:700;font-size:16px;padding:12px 20px;border-radius:12px;border:2px solid #ffd54f;background:rgba(8,10,22,.9);color:#fff;cursor:pointer;transition:.15s;box-shadow:0 8px 20px rgba(0,0,0,.45)}
+#menu button:hover{background:#ffd54f;color:#111;transform:translateY(-2px)}
+#title,#end{position:absolute;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+#title{background:center/cover url(images/bg_glava1.png)}
+#title::before{content:"";position:absolute;inset:0;background:rgba(5,6,12,.55);backdrop-filter:blur(3px)}
+#title>*{position:relative}
+#title .chap{font-family:'Russo One';color:#111;background:#ffd54f;border:3px solid #111;padding:6px 18px;transform:rotate(-2deg);letter-spacing:.25em;font-size:14px}
+#title h1{font-family:'Russo One';font-size:clamp(60px,12vw,150px);color:#fff;text-shadow:6px 6px 0 #c62828,12px 12px 0 rgba(0,0,0,.45);letter-spacing:.05em;margin:16px 0 6px}
+#title .sub{font-family:'Russo One';color:#ffd54f;letter-spacing:.45em;font-size:clamp(14px,3vw,26px);text-transform:uppercase}
+#title p{color:#cdd;margin-top:22px;font-size:13px;max-width:520px;line-height:1.6}
+#startBtn{margin-top:26px;font-family:'Russo One';font-size:20px;color:#111;background:#ffd54f;border:3px solid #111;border-radius:14px;padding:14px 34px;cursor:pointer;box-shadow:5px 5px 0 #000;transition:.15s;animation:pulse 1.8s infinite}
+#startBtn:hover{transform:scale(1.05)}
+@keyframes pulse{0%,100%{box-shadow:5px 5px 0 #000,0 0 0 0 rgba(255,213,79,.5)}50%{box-shadow:5px 5px 0 #000,0 0 0 18px rgba(255,213,79,0)}}
+#end{display:none;background:rgba(4,5,10,.9)}
+#end .stamp{padding:16px 34px;border:5px double #c62828;color:#c62828;font-family:'Russo One';font-size:clamp(24px,5vw,44px);transform:rotate(-7deg);letter-spacing:.12em;background:rgba(255,255,255,.9);border-radius:10px;animation:stampIn .5s cubic-bezier(.2,2,.4,1) both}
+@keyframes stampIn{from{transform:rotate(-7deg) scale(2.6);opacity:0}to{transform:rotate(-7deg) scale(1);opacity:1}}
+#end p{color:#9ab;margin:26px 0;font-size:14px}
+#end button{font-family:'Russo One';font-size:16px;color:#111;background:#ffd54f;border:3px solid #111;border-radius:12px;padding:10px 26px;cursor:pointer;box-shadow:4px 4px 0 #000}
+@media(max-width:700px){
+  #txt{font-size:16px}
+  #hint,#saveStatus{display:none}
+  .spr .body img{max-width:64vw}
+  .spr{height:70%}
+}
+</style>
+</head>
+<body>
+<div id="bar">
+  <div class="logo">🏐 КЛЭЙ<span>визуальная новелла • глава 1 • любительская лига</span></div>
+  <span id="saveStatus">Скачиваю медиа 11/11: pasha_ul.png</span>
+  <span id="hint">клик / пробел — далее • клик во время печати — показать всё</span>
+  <button id="restartBtn" title="Начать заново">⟲ Сначала</button>
+  <button id="saveBtn" disabled="">💾 Сохранить всё</button>
+</div>
+<div id="stage">
+  <div class="bglayer" id="bgA"></div>
+  <div class="bglayer" id="bgB"></div>
+  <div id="sprites"></div>
+  <div id="menu"></div>
+  <div id="dlg"><span id="who"></span><span id="txt"></span><span id="adv">▼</span></div>
+  <div id="title">
+    <div class="chap">ГЛАВА 1</div>
+    <h1>КЛЭЙ</h1>
+    <div class="sub">любительская лига</div>
+    <p>Бывший профессиональный волейболист начинает новую жизнь — в третьей любительской лиге. Тренер с бутылкой, Павлик-Олег и восемь сеток впереди.</p>
+    <button id="startBtn">▶ Начать историю</button>
+  </div>
+  <div id="end">
+    <div class="stamp">КОНЕЦ ПЕРВОЙ ГЛАВЫ</div>
+    <p>Следующая игра — в четверг…</p>
+    <button id="endBtn">⟲ В начало</button>
+  </div>
+</div>
+
+<script>
+/* ================= МЕДИА ================= */
+var BG={
+ glava1:'images/bg_glava1.png',
+ kvart:'images/bg_kvart.png',
+ volleyball:'images/bg_volleyball.png',
+ razdevalka:'images/bg_razdevalka.png',
+ reseption:'images/bg_reseption.png'
+};
+var IMG={
+ klay:'images/klay.png',
+ klayzl:'images/klay_zl.png',
+ trener:'images/trener.png',
+ trenerul:'images/trener_ul.png',
+ pasha:'images/pasha.png',
+ pashaul:'images/pasha_ul.png'
+};
+var CH={t:{name:'Тренер',color:'#ff5252'},k:{name:'Клэй',color:'#c8ffc8'},p:{name:'Павлик',color:'#7d8cff'},tel:{name:'Голос в телефоне',color:'#ffe94a'}};
+
+/* ================= СЦЕНАРИЙ (ветвления как в игре) ================= */
+var SCRIPT={
+homestart:[
+['scene','kvart'],
+['say',null,'Вы — Клэй. Вы бывший профессиональный волейболист.'],
+['say',null,'Ваша мать — потомственная волейболистка, а отец вообще ТАТАРИН.'],
+['say',null,'Всю жизнь мать поддерживала ваше стремление стать волейболистом... В то время как отец настаивал на том, чтобы вы продолжили его семейное дело и стали ТАТАРИНОМ.'],
+['say',null,'У вас больше нет сил.'],
+['say',null,'Волейбол — это неотъемлемая часть вашей жизни... но не вся.'],
+['say',null,'Вы решаете начать другую жизнь.'],
+['show','klay','center'],
+['say','k','Профессиональная карьера все-таки позади.'],
+['say','k','Но я так много лет отдал этому виду спорта.'],
+['say','k','Надо найти что-то для души.'],
+['say','k','Может быть играть, но уже для себя.'],
+['hide','klay'],
+['shake'],
+['show','tel','top'],
+['pause',1400],
+['menu','Вам звонят…',[['Поднять трубку','telephone_positive'],['Игнорировать','telephone_negative']]]
+],
+telephone_negative:[
+['scene','kvart'],['show','klay','left'],
+['say','k','Нет! Лучше возьму трубку.'],
+['menu','',[['Взять трубку','telephone_positive']]]
+],
+telephone_positive:[
+['scene','kvart'],['show','klay','left'],['show','tel','right'],
+['say','tel','Привет! Как дела, Клэй?'],
+['say','k','Привет! Да вот решил продолжить играть в волейбол... но уже так... для себя.'],
+['say','tel','Как раз звоню тебе по этому поводу.'],
+['say','tel','Есть тут один вариант... но это андеграунд, дружище!'],
+['say','tel','Есть шанс зарекомендовать себя среди любителей.'],
+['say','k','Ха! Очень смешно!'],
+['say','k','Ты же знаешь, что я только недавно закончил играть... на нормальном уровне.'],
+['say','tel','Выбирать не приходится. Сейчас конец подачи заявок на второй круг в любительском чемпионате. Мест уже нигде нет.'],
+['say','tel','Но я на всякий закинул тебя в свою бывшую команду. Им как раз нужно усиление.'],
+['say','tel','Направил тебе номер тренера, позвони — он ждет.'],
+['hide','tel'],
+['say','k','Хм. Спасибо!'],
+['menu','',[['Позвонить тренеру','razgovor']]]
+],
+razgovor:[
+['scene','volleyball'],
+['say',null,'Вы позвонили тренеру, и он сразу позвал Вас на игру. Вы собрались и приехали в зал.'],
+['say',null,'Игра сегодня, вас ровно 6 человек.'],
+['say',null,'В команде Вас еще не знают, так как ваша новая команда... ПРИЕЗЖАЕТ ИСКЛЮЧИТЕЛЬНО К ИГРЕ.'],
+['say',null,'Вы ждете тренера.'],
+['show','klay','left'],
+['say','k','Странно... но никого нет, а игра через 15 минут.'],
+['say','k','Может я ошибся адресом?'],
+['show','trener','right'],
+['say','t','Адресом ты точно ошибся. Поверь мне.'],
+['say','t','Это ты мне звонил, пацан?'],
+['say','t','На какой позиции играешь, а пацан?'],
+['say','t','Хотя не важно — в тройке попрыгаешь, пацан!'],
+['say','t','КАК ТЕБЯ ЗОВУТ, ПАЦАН?'],
+['menu','КАК ТЕБЯ ЗОВУТ, ПАЦАН?',[['Меня зовут КЛЭЙ!','razgovor2'],['Зачем Вам знать мое имя?','razgovor2'],['Пацан','razgovor2'],['Давайте без имен','razgovor2']]]
+],
+razgovor2:[
+['scene','volleyball'],['show','klay','left'],['show','trenerul','right'],
+['say','t','И так, ПАЦАН!'],
+['say','t','Сегодня попрыгаешь в ТРЕТЬЕМ номере.'],
+['say','t','Нам сказали, что ты профик.'],
+['say','t','Поэтому, думаю, в центре тоже должен уметь.'],
+['hide','trenerul'],['show','trener','right'],['hide','klay'],['show','klayzl','left'],
+['say','k','Э-э-э!'],
+['say','k','Я связующий!'],
+['say','k','Я не умею в ТРЕШКЕ!'],
+['hide','klayzl'],['show','klay','left'],['hide','trener'],['show','trenerul','right'],
+['say','t','Ладно, ПАЦАН!'],
+['say','t','Нет времени на разговоры!'],
+['say','t','Команда уже подошла.'],
+['say','t','Поговорим после игры.'],
+['menu','',[['Пойти на игру','razdevalka']]]
+],
+razdevalka:[
+['scene','razdevalka'],['hide','trenerul'],['show','klay','center'],
+['say','k','Ну и игра...'],
+['say','k','Команда просто супер...'],
+['say','k','Но для первого раза пойдет...'],
+['say','k','Надо поговорить с тренером.'],
+['menu','',[['Пойти к тренеру','razdevalka2']]]
+],
+razdevalka2:[
+['scene','razdevalka'],['hide','klay'],['show','pasha','center'],
+['say','p','Э-э, погоди!'],
+['say','p','Куда это ты собрался?'],
+['show','klay','left'],['hide','pasha'],['show','pasha','right'],
+['say','p','Знатно проебали...'],
+['say','p','Но ты хорош, конечно...'],
+['say','p','Восемь сеток. Шесть неподач. Все удары... аут.'],
+['say','p','Игрок от бога...'],
+['say','p','И как же зовут такого одаренного?'],
+['say','k','КЛЭЙ.'],
+['say','p','Выпей баночку соплей.'],
+['say','p','КЛЭЙ — это разве мужское имя?'],
+['menu','',[['...мужское','razgovor3'],['Я ПЛЯЖНИК','razgovor4']]]
+],
+razgovor3:[
+['hide','pasha'],['show','pashaul','right'],
+['say','p','Ага! Может ты просто ПЛЯЖНИК?'],
+['menu','',[['Я ПЛЯЖНИК','razgovor4']]]
+],
+razgovor4:[
+['show','pashaul','right'],
+['say','p','Умора нахуй!'],
+['hide','pashaul'],['show','pasha','right'],
+['say','p','Ты откуда такой взялся?'],
+['say','p','Хуже тебя сегодня не было никого!'],
+['say','p','Кстати!'],
+['say','p','Сегодня к нам должен был приехать профик.'],
+['hide','pasha'],['show','pashaul','right'],
+['say','p','Но, кажись, не доехал.'],
+['hide','pashaul'],['show','pasha','right'],
+['say','p','Ну давай, КЛЭЙ, рассказывай.'],
+['say','p','Откуда ты? Где играл?'],
+['menu','',[['В молодежной лиге','razgovor5'],['...','razgovor5']]]
+],
+razgovor5:[
+['hide','pasha'],['show','pashaul','right'],
+['say','p','Понятно. Нигде, в общем!'],
+['hide','pashaul'],['show','pasha','right'],
+['say','p','На какой позиции играешь?'],
+['menu','',[['Связующий','razgovor7']]]
+],
+razgovor7:[
+['say','p','Ого!'],
+['hide','pasha'],['show','pashaul','right'],
+['say','p','Криворуких у нас уже хватает.'],
+['hide','pashaul'],['show','pasha','right'],
+['say','p','Ладно! Деваться некуда. Будем доигрывать сезон вместе.'],
+['say','p','Давай я расскажу, что и как устроено у нас в команде.'],
+['jump','razgovor6']
+],
+razgovor6:[
+['menu','',[['Здесь платят?','oplata1'],['Расскажи о нашей команде','team'],['Расскажи о себе','pavlik'],['Давай дальше','dalee']]]
+],
+oplata1:[
+['say','p','У нас есть правило.'],
+['say','p','В нашей команде платят! 800 рублей за игру.'],
+['menu','',[['Ну это же мало','oplata2'],['Я хочу больше','oplata2']]]
+],
+oplata2:[
+['hide','pasha'],['show','pashaul','right'],
+['say','p','Ну плати больше, йопта!'],
+['say','p','Или ты думал, что будут платить тебе?'],
+['menu','',[['А как же спонсор?','oplata3'],['Понял','razgovor6']]]
+],
+oplata3:[
+['hide','pashaul'],['show','pasha','right'],
+['say','p','Чего? Какой спонсор?'],
+['say','p','Тебе вроде сегодня по голове не били.'],
+['hide','pasha'],['show','pashaul','right'],
+['say','p','...ещё.'],
+['hide','pashaul'],['show','pasha','right'],
+['say','p','Мы тут за все платим сами.'],
+['say','p','Кто-то отдает последние деньги, чтобы поиграть.'],
+['say','p','Ты наверно заметил, что я вообще играю в черных носках?'],
+['say','p','...и это противоречит этикету волейбола.'],
+['say','p','Но никто даже не догадывается...'],
+['hide','pasha'],['show','pashaul','right'],
+['say','p','...что это не носки, а варежки.'],
+['hide','pashaul'],['show','pasha','right'],
+['menu','',[['Понял','razgovor6']]]
+],
+team:[
+['say','p','Про парней рассказывать не буду. Сам с ними познакомишься.'],
+['say','p','А так, команде уже более 10 лет.'],
+['say','p','Я и сам в нее пришел 8-9.'],
+['hide','pasha'],['show','pashaul','right'],
+['say','p','Килограмм назад.'],
+['hide','pashaul'],['show','pasha','right'],
+['say','p','За последние 2 года прошли три лиги без особого напряга.'],
+['say','p','Сейчас мы в третьей любительской лиге.'],
+['menu','',[['Круто','team2'],['Хороший результат','team2']]]
+],
+team2:[
+['say','p','Да! Не всем дано так быстро..'],
+['hide','pasha'],['show','pashaul','right'],
+['say','p','Вылететь с ВЫШКИ...'],
+['say','p','Прямиком в жопу.'],
+['hide','pashaul'],['show','pasha','right'],
+['say','p','У нас есть кадровые проблемы.'],
+['say','p','Также есть проблемы с тем, чтобы команда собиралась на игры.'],
+['say','p','Мы уверенно идем в ЧЕТВЕРТУЮ лигу.'],
+['menu','',[['Расскажи про тренера','team3'],['Понятно','razgovor6']]]
+],
+team3:[
+['show','trener','center',{ghost:true}],
+['say','p','Да вообще не очень понятно, кто он такой.'],
+['say','p','Появился 3 года назад.'],
+['say','p','Сначала просто пил в зале.'],
+['say','p','Болел за нас.'],
+['say','p','А потом просто с нихуя такой:'],
+['say','p','«Я ВООБЩЕ ВАШ ТРЕНЕР».'],
+['menu','',[['И что вы?','team4'],['Понятно','razgovor6']]]
+],
+team4:[
+['say','p','Что мы?'],
+['hide','pasha'],['show','pashaul','right'],
+['say','p','Да мы ОХУЕЛИ просто.'],
+['hide','pashaul'],['show','pasha','right'],
+['say','p','Но это была ВЫШКА. Тяжелый сезон.'],
+['say','p','Нам была нужна любая помощь.'],
+['say','p','Последняя игра сезона. Выиграли — остались.'],
+['say','p','Проиграли — прощаемся с лигой.'],
+['say','p','Эту игру мы проигрывали 2:0.'],
+['say','p','Шла третья партия.'],
+['say','p','23:24 в пользу соперников.'],
+['say','p','Они на подаче.'],
+['say','p','И тут ОН включился.'],
+['say','p','Это была легендарная замена.'],
+['say','p','Он поменял сразу двух доигровщиков...'],
+['menu','',[['Что было дальше?','team5'],['Мне это не очень интересно','razgovor6']]]
+],
+team5:[
+['say','p','Сначала мы подумали, что он ЕБАНУТЫЙ.'],
+['say','p','Но потом оказалось...'],
+['hide','pasha'],['show','pashaul','right'],
+['say','p','...что так и есть.'],
+['hide','pashaul'],['show','pasha','right'],
+['say','p','23:25 мы проиграли, как сейчас помню.'],
+['menu','',[['Не смогли принять?','team6'],['Мне это не интересно','razgovor6']]]
+],
+team6:[
+['say','p','Да какой там нахуй «не смогли принять».'],
+['hide','pasha'],['show','pashaul','right'],
+['say','p','Этот ебанутый поменял двух доигровщиков МЕСТАМИ.'],
+['say','p','До приема даже не дошло...'],
+['say','p','Судья показал жест диджея, свистнул — все! РАССТАНОВКА!'],
+['hide','pashaul'],['hide','trener'],['show','trener','center'],
+['say','t','Ребят, а ничего, что я все это время тут стою?'],
+['say','t','Хоть не при мне...'],
+['menu','',[['Да уж. Получилось не очень удобно','razgovor6']]]
+],
+pavlik:[
+['say','p','Все зовут меня ПАВЛИК.'],
+['menu','',[['Приятно познакомиться, Павел','pavlik2']]]
+],
+pavlik2:[
+['say','p','Вообще-то я Олег!'],
+['say','p','Я не знаю, почему все называют меня Павлик, но уже как-то так повелось!'],
+['say','p','В игре ты увидел, что я тоже играю на позиции центра.'],
+['say','p','В мое время это называлось — «ВЗЛЕТЧИК»!'],
+['menu','',[['А в какое это время?','pavlik3']]]
+],
+pavlik3:[
+['say','p','В любое.'],
+['say','p','Даже в то, которое показывают песочные часы.'],
+['pause',1600],
+['say','p','Но я не всегда играл в ЦЕНТРЕ.'],
+['say','p','До этого я очень долго играл...'],
+['say','p','В ТРУСАХ.'],
+['menu','',[['В одних трусах? Разве можно играть в трусах?','pavlik4'],['Понятно','razgovor6']]]
+],
+pavlik4:[
+['say','p','Да, конечно можно.'],
+['hide','pasha'],['show','pashaul','right'],
+['say','p','Особенно, если до этого ты играл без них.'],
+['menu','',[['Понятно','razgovor6']]]
+],
+dalee:[
+['menu','',[['Пока! Мне нужно к тренеру','trposle'],['Давай еще поговорим','razgovor6']]]
+],
+trposle:[
+['scene','reseption'],['hide','pasha'],['hide','trener'],['show','klay','center'],
+['pause',900],
+['say','k','Очень странная команда.'],
+['say','k','Еще и ПавлОлег этот токсичный какой-то.'],
+['say','k','Пускай игра у меня не задалась, но я выше этого.'],
+['say','k','Это не мой уровень.'],
+['say','k','Я себе по-другому представлял любительскую лигу.'],
+['show','klay','left'],['show','trener','right'],
+['say','t','Ну что?'],
+['say','t','До сих пор перевариваешь?'],
+['hide','trener'],['show','trenerul','right'],
+['say','t','Забудь! Игра есть игра.'],
+['hide','trenerul'],['show','trener','right'],
+['say','t','Я сразу увидел на площадке, что это не тот уровень, на котором ты можешь играть.'],
+['say','t','Тебе стоило бы найти что попроще.'],
+['hide','trener'],['show','trenerul','right'],
+['say','t','Это реально ужас, даже для ТРЕТЬЕЙ лиги.'],
+['menu','',[['Я давно не тренировался','trposle2'],['Это не твое дело...','trposle2']]]
+],
+trposle2:[
+['hide','trenerul'],['show','trener','right'],
+['say','t','Не важно. Ты наверняка понял, что тебе предстоит.'],
+['say','t','Забудь все, что знал раньше о волейболе.'],
+['say','t','Это не с мальчиками в красивых залах и формах играть.'],
+['say','t','Любительская лига — это выживание.'],
+['say','t','Это игра в «характер».'],
+['menu','',[['По каким дням тренировки?','trposle3']]]
+],
+trposle3:[
+['say','t','Чего?'],
+['say','t','Ты ебанулся?'],
+['say','t','О каких ты тренировках, парень?'],
+['say','t','Тренировки привели тебя сюда, если ты не заметил.'],
+['say','t','Никаких тренировок больше, только опыт. Ладно?'],
+['say','t','Наверно ты устал. Иди домой, отдохни. Следующая игра в четверг.'],
+['say','t','На всякий я добавил тебя в группу команды в мессенджере.'],
+['menu','',[['Пока','home']]]
+],
+home:[
+['scene','kvart'],['hide','trener'],['hide','klay'],
+['say',null,'Вы вернулись домой.'],
+['say',null,'Вы переполнены эмоциями.'],
+['say',null,'Трудно представить, что любительский спорт — это когда сам за него платишь.'],
+['say',null,'И пытаешься делать также, как и те, кого ты видишь по телевизору.'],
+['say',null,'Но это жалкая пародия...'],
+['say',null,'Однако теперь и Вы — пародист.'],
+['say',null,'Но насколько Вы хороший пародист?'],
+['say',null,'А не клоун?'],
+['pause',1400],
+['show','klay','center'],
+['say','k','Наконец-то я дома.'],
+['say','k','Что это вообще было такое?'],
+['say','k','Это подстава. Зачем я согласился?'],
+['say','k','Мало того, что команда — сброд какой-то, так еще ТРЕНЕР и ПАВЛИК...'],
+['say','k','...очень непонятные персонажи.'],
+['hide','klay'],['show','klay','left'],['shake'],['show','tel','top'],
+['pause',1400],
+['menu','Вам звонят…',[['Поднять трубку','home2']]]
+],
+home2:[
+['scene','kvart'],['hide','tel'],['show','tel','right'],
+['say','tel','Привет! Слышал про твой дебют...'],
+['say','tel','Ну что? Как тебе?'],
+['menu','',[['Нормально. Хороший коллектив!','home3'],['Ты издеваешься?','home3']]]
+],
+home3:[
+['say','tel','Ха! А ты думал?'],
+['say','tel','Что «поиграть для себя» — это будет то же самое, к чему ты привык ТАМ?'],
+['menu','',[['Они даже не тренируются...','home4'],['Они играют отвратительно','home4']]]
+],
+home4:[
+['say','tel','Ну да. Они не тренируются.'],
+['say','tel','В этом и есть вся прелесть любительского волейбола.'],
+['say','tel','Перестань жить теми временами, когда ты играл в молодежке.'],
+['menu','',[['Там была система, и мы нормально играли','home5']]]
+],
+home5:[
+['say','tel','Как давно мы с тобой не виделись?'],
+['say','tel','Когда мы оба играли в молодежке, я тоже так думал.'],
+['say','tel','Но сейчас я могу тебе сказать одно.'],
+['say','tel','Как бы ни казалось, но даже ТРЕТЬЯ любительская лига ничем не отличается от молодежки по уровню волейбола.'],
+['say','tel','И там и там его нет.'],
+['say','tel','Но тут волейбол — это больше, чем спорт.'],
+['say','tel','Даже у нас, в ВЫШКЕ, точно такое же отношение.'],
+['menu','',[['Почему ты не позвал меня в свою команду?','home6']]]
+],
+home6:[
+['say','tel','Да нахуй ты нам нужен.'],
+['say','tel','Извини, что так грубо, но пока ты не прочувствуешь любительскую лигу в самом ее сердце, то нет смысла играть в лигах выше.'],
+['say','tel','Тем более ты и так в моей команде...'],
+['say','tel','ТРЕНЕР, ПАВЛИК — это ребята, которые знают, что делать.'],
+['menu','',[['Это абсурд. Я больше не могу слушать про то, что любительская лига — это что-то серьезное. Пока.','home7']]]
+],
+home7:[
+['hide','tel'],['hide','klay'],['show','klay','center'],
+['say','k','Ладно. Это был тяжелый день!'],
+['say','k','Посмотрим, что будет в четверг.'],
+['say','k','Я не успел толком познакомиться с командой.'],
+['say','k','Возможно в ней есть адекватные.'],
+['pause',1600],
+['menu','',[['Конец первой главы','end']]]
+],
+end:[['end']]
+};
+
+/* ================= ДВИЖОК ================= */
+var stage=document.getElementById('stage'),bgA=document.getElementById('bgA'),bgB=document.getElementById('bgB');
+var dlg=document.getElementById('dlg'),whoEl=document.getElementById('who'),txtEl=document.getElementById('txt');
+var menuEl=document.getElementById('menu'),spritesBox=document.getElementById('sprites');
+var cur='homestart',ptr=0,typing=null,menuOpen=false,started=false,paused=false;
+var sprites={},PROC={},bgFront=bgA;
+
+function shake(){stage.classList.remove('shake');void stage.offsetWidth;stage.classList.add('shake');}
+
+function doScene(key){
+  var url=BG[key];
+  var back=(bgFront===bgA)?bgB:bgA;
+  back.style.backgroundImage='url('+url+')';
+  void back.offsetWidth;
+  back.classList.add('on');
+  bgFront.classList.remove('on');
+  bgFront=back;
+}
+
+function makeBody(id){
+  var b=document.createElement('div');b.className='body';
+  if(id==='tel'){var d=document.createElement('div');d.className='phonebox';d.textContent='📱';b.appendChild(d);}
+  else{var im=document.createElement('img');im.alt=id;im.setAttribute('data-remote',IMG[id]);im.src=PROC[IMG[id]]||IMG[id];b.appendChild(im);}
+  return b;
+}
+function doShow(id,pos,opts){
+  opts=opts||{};
+  var el=sprites[id];
+  if(!el){el=document.createElement('div');el.className='spr';el.dataset.id=id;el.appendChild(makeBody(id));spritesBox.appendChild(el);sprites[id]=el;}
+  el.classList.remove('left','right','center','top');
+  el.classList.add(pos);
+  el.classList.toggle('ghost',!!opts.ghost);
+  void el.offsetWidth;
+  el.classList.add('on');
+}
+function doHide(id){var el=sprites[id];if(el){el.classList.remove('on');setTimeout(function(){if(!el.classList.contains('on')&&el.parentNode){el.parentNode.removeChild(el);delete sprites[id];}},800);}}
+function setFocus(id){
+  for(var k in sprites){
+    var b=sprites[k].querySelector('.body');
+    if(!b)continue;
+    b.classList.remove('talk','listen');
+    b.classList.add(k===id?'talk':'listen');
+  }
+}
+function typeText(text,cb){
+  txtEl.textContent='';dlg.classList.remove('done');
+  var i=0;
+  typing=setInterval(function(){
+    i++;txtEl.textContent=text.slice(0,i);
+    if(i>=text.length){clearInterval(typing);typing=null;dlg.classList.add('done');if(cb)cb();}
+  },40); /* 25 символов/сек */
+}
+function finishTyping(){if(typing){clearInterval(typing);typing=null;dlg.classList.add('done');}}
+
+function doSay(w,text){
+  if(w){whoEl.textContent=CH[w].name;whoEl.style.color=CH[w].color;setFocus(w==='tel'?'tel':(w==='k'?'klay':(w==='p'?'pasha':'trener')));}
+  else{whoEl.textContent='';setFocus(null);}
+  typeText(text);
+}
+function doMenu(caption,choices){
+  menuOpen=true;
+  if(caption){whoEl.textContent='';txtEl.textContent=caption;dlg.classList.add('done');setFocus(null);}
+  menuEl.innerHTML='';
+  choices.forEach(function(c){
+    var b=document.createElement('button');b.textContent=c[0];
+    b.addEventListener('click',function(ev){
+      ev.stopPropagation();
+      menuOpen=false;menuEl.classList.remove('on');menuEl.innerHTML='';
+      cur=c[1];ptr=0;run();
+    });
+    menuEl.appendChild(b);
+  });
+  menuEl.classList.add('on');
+}
+function run(){
+  var ops=SCRIPT[cur];
+  while(ptr<ops.length){
+    var op=ops[ptr++];
+    var k=op[0];
+    if(k==='scene'){doScene(op[1]);continue;}
+    if(k==='show'){doShow(op[1],op[2],op[3]);continue;}
+    if(k==='hide'){doHide(op[1]);continue;}
+    if(k==='shake'){shake();continue;}
+    if(k==='jump'){cur=op[1];ptr=0;ops=SCRIPT[cur];continue;}
+    if(k==='pause'){paused=true;setTimeout(function(){paused=false;run();},op[1]);return;}
+    if(k==='say'){doSay(op[1],op[2]);return;}
+    if(k==='menu'){doMenu(op[1],op[2]);return;}
+    if(k==='end'){document.getElementById('end').style.display='flex';return;}
+  }
+}
+function advance(){
+  if(!started||menuOpen||paused)return;
+  if(document.getElementById('end').style.display==='flex')return;
+  if(typing){finishTyping();return;}
+  run();
+}
+stage.addEventListener('click',advance);
+document.addEventListener('keydown',function(e){if(e.code==='Space'||e.code==='Enter'){e.preventDefault();advance();}});
+
+document.getElementById('startBtn').addEventListener('click',function(e){
+  e.stopPropagation();
+  document.getElementById('title').style.display='none';
+  started=true;run();
+});
+document.getElementById('endBtn').addEventListener('click',function(){location.reload();});
+document.getElementById('restartBtn').addEventListener('click',function(){location.reload();});
+
+/* ================= ХРОМАКЕЙ (зелёный фон) ================= */
+function chroma(url){
+  return new Promise(function(res,rej){
+    var im=new Image();im.crossOrigin='anonymous';
+    im.onload=function(){
+      try{
+        var w=im.naturalWidth,h=im.naturalHeight,c=document.createElement('canvas');
+        c.width=w;c.height=h;
+        var x=c.getContext('2d',{willReadFrequently:true});
+        x.drawImage(im,0,0);
+        var d=x.getImageData(0,0,w,h),p=d.data,seen=new Uint8Array(w*h),st=[];
+        function isG(i){var r=p[i],g=p[i+1],b=p[i+2];return g>100&&(g-r)>45&&(g-b)>45;}
+        function push(X,Y){var q=Y*w+X;if(seen[q])return;if(isG(q*4)){seen[q]=1;st.push(q);}}
+        for(var X=0;X<w;X++){push(X,0);push(X,h-1);}
+        for(var Y=0;Y<h;Y++){push(0,Y);push(w-1,Y);}
+        while(st.length){
+          var q=st.pop(),i=q*4;
+          p[i+3]=0;
+          var qx=q%w,qy=(q-qx)/w;
+          if(qx>0)push(qx-1,qy);
+          if(qx<w-1)push(qx+1,qy);
+          if(qy>0)push(qx,qy-1);
+          if(qy<h-1)push(qx,qy+1);
+        }
+        x.putImageData(d,0,0);
+        res(c.toDataURL('image/png'));
+      }catch(e){rej(e);}
+    };
+    im.onerror=rej;im.src=url;
+  });
+}
+Object.keys(IMG).forEach(function(id){
+  chroma(IMG[id]).then(function(dataUrl){
+    PROC[IMG[id]]=dataUrl;
+    document.querySelectorAll('img[data-remote="'+IMG[id]+'"]').forEach(function(el){el.src=dataUrl;});
+  }).catch(function(){});
+});
+
+/* ================= СОХРАНЕНИЕ (ZIP: медиа + html) ================= */
+var MEDIA=[
+{file:'bg_glava1.png',url:BG.glava1},{file:'bg_kvart.png',url:BG.kvart},{file:'bg_volleyball.png',url:BG.volleyball},
+{file:'bg_razdevalka.png',url:BG.razdevalka},{file:'bg_reseption.png',url:BG.reseption},
+{file:'klay.png',url:IMG.klay},{file:'klay_zl.png',url:IMG.klayzl},{file:'trener.png',url:IMG.trener},
+{file:'trener_ul.png',url:IMG.trenerul},{file:'pasha.png',url:IMG.pasha},{file:'pasha_ul.png',url:IMG.pashaul}
+];
+var saveBtn=document.getElementById('saveBtn'),saveStatus=document.getElementById('saveStatus');
+saveBtn.addEventListener('click',function(e){
+  e.stopPropagation();
+  saveBtn.disabled=true;saveStatus.textContent='Готовлю архив…';
+  var done=function(blob,name){
+    var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;
+    document.body.appendChild(a);a.click();a.remove();
+    saveStatus.textContent='Готово! Архив скачан ✔';saveBtn.disabled=false;
+  };
+  if(!window.JSZip){
+    var h0='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
+    done(new Blob([h0],{type:'text/html'}),'klay_novella.html');return;
+  }
+  var zip=new JSZip(),folder=zip.folder('images'),chain=Promise.resolve(),failed=[];
+  MEDIA.forEach(function(m,idx){
+    chain=chain.then(function(){
+      saveStatus.textContent='Скачиваю медиа '+(idx+1)+'/'+MEDIA.length+': '+m.file;
+      return fetch(m.url,{mode:'cors'}).then(function(r){if(!r.ok)throw 0;return r.blob();})
+        .then(function(b){folder.file(m.file,b);})
+        .catch(function(){failed.push(m.file+'\t'+m.url);});
+    });
+  });
+  chain.then(function(){
+    if(failed.length)zip.file('images/urls_fallback.txt',failed.join('\n'));
+    document.querySelectorAll('img[data-remote]').forEach(function(el){el.setAttribute('src',el.getAttribute('data-remote'));});
+    var html='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
+    MEDIA.forEach(function(m){html=html.split(m.url).join('images/'+m.file);});
+    zip.file('index.html',html);
+    saveStatus.textContent='Упаковываю архив…';
+    return zip.generateAsync({type:'blob'});
+  }).then(function(blob){done(blob,'klay_glava1_novella.zip');})
+  .catch(function(){
+    var h1='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
+    done(new Blob([h1],{type:'text/html'}),'klay_novella.html');
+  });
+});
+</script>
+
+
+</body></html>
